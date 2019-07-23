@@ -1,0 +1,173 @@
+trisa=1:porta=0
+trisb=0:portb=0
+trisc=%00000010:portc=0
+trisd=0:portd=0
+trise=0:porte=0
+symbol led1=portb.0
+symbol led2=portb.1
+symbol led3=portb.2
+LCDOUT $FE,$48,0,0,12,4,4,4,14,0
+LCDOUT $FE,$40,0,14,16,14,1,30,4,0
+
+sayi var byte
+ito var byte
+ito=200
+servozaman var word
+servozaman=30000
+gecikme var byte
+gecikme=0
+sure var word
+servo1 var word
+servo2 var word
+servo3 var word
+servo4 var word
+toplam var word
+i var word
+i=0
+define LCD_DREG PORTC
+define LCD_DBIT 4
+define LCD_EREG PORTB
+define LCD_EBIT 4
+define LCD_RWREG PORTB
+define LCD_RWBIT 5
+define LCD_RSREG PORTB
+define LCD_RSBIT 6
+define LCD_LINES 2
+'______________________________________________________
+dEFINE ADC_BITS 8
+DEFINE ADC_SAMPLEUS 100
+DEFINE ADC_CLOCK 3
+ADCON1=%00000100
+'______________________________________________________
+low portb.2
+pause 200
+lcdout $fe,1
+'=======================================================
+pause 200
+if portc.1=0 then kalibre
+lcdout $fe,1
+lcdout $fe,$80,"Robot ilk Konuma"
+lcdout $fe,$c0," Getiriliyor..."
+gosub motorpark
+
+'-------------------------------------------------------
+'|||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+baslangic:
+lcdout $fe,1
+lcdout $fe,$80,"      Renk"
+lcdout $fe,$c0," Alg",1,"lan",1,"yor..."
+high led1
+high led2
+high led3
+gosub denetle
+if sayi=>31 and sayi=<33 then kirmizirenk
+if  sayi>=25 and sayi<=26 then sarirenk
+if  sayi=>27 and sayi=<29 then yesilrenk
+pause 2000
+goto baslangic
+'-------------------------------------------------
+denetle
+adcin 0,sayi
+bak:if ADCON0.2=1 then bak
+return
+'------------------------------------------------------
+sarirenk:
+servo1=130
+lcdout $fe,1
+lcdout $fe,$80,"Renk: SARI"
+lcdout $fe,$c0,"Kutu B",1,"rak",1,"l",1,"yor"
+goto hareket
+'-------------------------------------------------------
+kirmizirenk:
+servo1=160
+lcdout $fe,1
+lcdout $fe,$80,"Renk: KIRMIZI"
+lcdout $fe,$c0,"Kutu B",1,"rak",1,"l",1,"yor"
+goto hareket
+'------------------------------------------------------
+yesilrenk:
+servo1=190
+lcdout $fe,1
+lcdout $fe,$80,"Renk: YE",0,"iL"
+lcdout $fe,$c0,"Kutu B",1,"rak",1,"l",1,"yor"
+goto hareket
+'-------------------------------------------------
+hareket:
+'ileri atıldı
+servo2=200
+gosub servom
+'aldı
+servo3=100
+gosub servom
+'kolu çekti
+servo2=150
+gosub servom
+'döndü
+gosub servor
+'öne atıldı
+servo2=200
+gosub servom
+'bıraktı
+servo3=200
+gosub servom
+goto motorpark
+
+'----------------------------------------------
+motorpark:
+'yukarı kalktı
+servo4=175
+gosub servom
+'dik açı
+servo2=150
+gosub servom
+'döndü
+servo1=100
+gosub servor
+'kolu açtı
+servo3=200
+gosub servom
+goto baslangic
+'--------------------------------------------------------
+servor:
+i=0
+for i=0 to ito
+portd=0
+pulsout portd.0,servo1
+pulsout portd.1,servo2
+pulsout portd.2,servo3
+pulsout portd.3,servo4
+sure=(servo1+servo2+servo3+servo4)*10
+sure=servozaman-sure
+pause gecikme
+next
+pause 300
+return
+
+
+servom:
+i=0
+for i=0 to ito
+portd=0
+pulsout portd.1,servo2
+pulsout portd.2,servo3
+pulsout portd.3,servo4
+sure=(servo2+servo3+servo4)*10
+sure=servozaman-sure
+pause gecikme
+next
+pause 300
+return
+'-----------------------------------------------
+kalibre:
+high led1
+high led2
+high led3
+gosub denetle                                                                                                        
+lcdout $fe,1
+lcdout $fe,$80," Y028/S026/K032"
+lcdout $fe,$c0,"------",dec3 sayi,"-------"
+pause 2000
+goto kalibre
+
+
+
